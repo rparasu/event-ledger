@@ -66,17 +66,76 @@ Internal service. Manages account state — applies transactions and computes ba
 
 ## Prerequisites
 
-> _To be added_
+- Java 21
+- Maven 3.x (or use the included `./mvnw` wrapper — no install needed)
 
 ---
 
 ## Running the Services
 
-> _To be added (Docker Compose / manual steps)_
+> _Docker Compose to be added_
+
+### Manual — Account Service
+```bash
+cd account-service
+./mvnw spring-boot:run
+```
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:8081/swagger-ui/index.html` | Swagger UI — interactive API testing |
+| `http://localhost:8081/v3/api-docs` | OpenAPI JSON spec |
+| `http://localhost:8081/health` | Health check |
+
+![Account Service Swagger](docs/diagrams/SwaggerAcctService.png)
+
+### Manual — Gateway Service
+
+> _To be added_
+
+---
+
+## Testing Manually via Swagger
+
+Once the Account Service is running, open `http://localhost:8081/swagger-ui/index.html` and try:
+
+**Apply a transaction:**
+```json
+POST /accounts/{accountId}/transactions
+{
+  "eventId": "evt-001",
+  "type": "CREDIT",
+  "amount": 150.00,
+  "currency": "USD",
+  "eventTimestamp": "2026-05-15T14:00:00Z"
+}
+```
+
+**Get balance:**
+```
+GET /accounts/{accountId}/balance
+```
+
+**Verify idempotency** — submit the same `eventId` twice, second response returns `alreadyApplied: true`.
 
 ---
 
 ## Running the Tests
+
+### Account Service
+```bash
+cd account-service
+./mvnw test
+```
+
+Covers:
+- Idempotent transaction apply (duplicate `eventId` returns `200 alreadyApplied=true`)
+- Balance computation — `Σ(CREDIT) − Σ(DEBIT)`
+- Out-of-order tolerance — balance is correct regardless of arrival order
+- Input validation — rejects negative amounts and unknown transaction types
+- Health check
+
+### Gateway Service
 
 > _To be added_
 
