@@ -111,6 +111,24 @@ cd gateway
 
 ![Gateway Swagger](docs/diagrams/SwaggerGateway.png)
 
+**Submit an event (`POST /events`):**
+```json
+{
+  "eventId": "evt-001",
+  "accountId": "acct-123",
+  "type": "CREDIT",
+  "amount": 150.00,
+  "currency": "USD",
+  "eventTimestamp": "2026-05-15T14:02:11Z",
+  "metadata": {
+    "source": "mainframe-batch",
+    "batchId": "B-9042"
+  }
+}
+```
+
+**Verify idempotency** — submit the same `eventId` twice; second response returns `"duplicate": true` with HTTP 200.
+
 #### Inspecting the Database (H2 Console)
 
 Open `http://localhost:8080/h2-console` and connect with:
@@ -148,6 +166,19 @@ cd account-service
 
 ![Account Service Swagger](docs/diagrams/SwaggerAcctService.png)
 
+**Apply a transaction (`POST /accounts/{accountId}/transactions`):**
+```json
+{
+  "eventId": "evt-001",
+  "type": "CREDIT",
+  "amount": 150.00,
+  "currency": "USD",
+  "eventTimestamp": "2026-05-15T14:00:00Z"
+}
+```
+
+**Verify idempotency** — submit the same `eventId` twice; second response returns `alreadyApplied: true`.
+
 #### Inspecting the Database (H2 Console)
 
 Open `http://localhost:8081/h2-console` and connect with:
@@ -169,56 +200,6 @@ SELECT ACCOUNT_ID,
 FROM APPLIED_TRANSACTION
 GROUP BY ACCOUNT_ID;
 ```
-
----
-
-## Testing Manually via Swagger
-
-### Gateway Service
-
-Open `http://localhost:8080/swagger-ui/index.html` and try:
-
-**Submit an event (`POST /events`):**
-```json
-{
-  "eventId": "evt-001",
-  "accountId": "acct-123",
-  "type": "CREDIT",
-  "amount": 150.00,
-  "currency": "USD",
-  "eventTimestamp": "2026-05-15T14:02:11Z",
-  "metadata": {
-    "source": "mainframe-batch",
-    "batchId": "B-9042"
-  }
-}
-```
-
-**Verify idempotency** — submit the same `eventId` twice; second response returns `"duplicate": true` with HTTP 200.
-
----
-
-### Account Service
-
-Open `http://localhost:8081/swagger-ui/index.html` and try:
-
-**Apply a transaction (`POST /accounts/{accountId}/transactions`):**
-```json
-{
-  "eventId": "evt-001",
-  "type": "CREDIT",
-  "amount": 150.00,
-  "currency": "USD",
-  "eventTimestamp": "2026-05-15T14:00:00Z"
-}
-```
-
-**Get balance:**
-```
-GET /accounts/{accountId}/balance
-```
-
-**Verify idempotency** — submit the same `eventId` twice; second response returns `alreadyApplied: true`.
 
 ---
 
