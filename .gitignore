@@ -16,3 +16,6 @@ logs/
 
 # Environment
 .env
+
+# PlantUML source (keep locally, not in repo)
+*.puml
