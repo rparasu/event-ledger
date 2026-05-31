@@ -86,8 +86,31 @@ cd account-service
 | `http://localhost:8081/swagger-ui/index.html` | Swagger UI — interactive API testing |
 | `http://localhost:8081/v3/api-docs` | OpenAPI JSON spec |
 | `http://localhost:8081/health` | Health check |
+| `http://localhost:8081/h2-console` | H2 database console |
 
 ![Account Service Swagger](docs/diagrams/SwaggerAcctService.png)
+
+### Inspecting the Database (H2 Console)
+
+Open `http://localhost:8081/h2-console` and connect with:
+
+| Field | Value |
+|-------|-------|
+| JDBC URL | `jdbc:h2:mem:accountsdb` |
+| Username | `sa` |
+| Password | _(leave empty)_ |
+
+Useful queries:
+```sql
+-- View all applied transactions
+SELECT * FROM APPLIED_TRANSACTION;
+
+-- Check balance for a specific account
+SELECT ACCOUNT_ID,
+       SUM(CASE WHEN TYPE = 'CREDIT' THEN AMOUNT ELSE -AMOUNT END) AS BALANCE
+FROM APPLIED_TRANSACTION
+GROUP BY ACCOUNT_ID;
+```
 
 ### Manual — Gateway Service
 
