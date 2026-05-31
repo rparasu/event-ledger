@@ -94,45 +94,6 @@ The `docker-compose.yml` mounts the pre-built JARs into a `eclipse-temurin:21-jr
 
 ---
 
-### Manual — Account Service
-```bash
-cd account-service
-./mvnw spring-boot:run
-```
-
-| URL | Description |
-|-----|-------------|
-| `http://localhost:8081/swagger-ui/index.html` | Swagger UI — interactive API testing |
-| `http://localhost:8081/v3/api-docs` | OpenAPI JSON spec |
-| `http://localhost:8081/health` | Health check |
-| `http://localhost:8081/h2-console` | H2 database console |
-
-![Account Service Swagger](docs/diagrams/SwaggerAcctService.png)
-
-### Inspecting the Database (H2 Console)
-
-Open `http://localhost:8081/h2-console` and connect with:
-
-| Field | Value |
-|-------|-------|
-| JDBC URL | `jdbc:h2:mem:accountsdb` |
-| Username | `sa` |
-| Password | _(leave empty)_ |
-
-![Account Service H2 Console](docs/diagrams/h2-accountsdb.png)
-
-Useful queries:
-```sql
--- View all applied transactions
-SELECT * FROM APPLIED_TRANSACTION;
-
--- Check balance for a specific account
-SELECT ACCOUNT_ID,
-       SUM(CASE WHEN TYPE = 'CREDIT' THEN AMOUNT ELSE -AMOUNT END) AS BALANCE
-FROM APPLIED_TRANSACTION
-GROUP BY ACCOUNT_ID;
-```
-
 ### Manual — Gateway Service
 
 ```bash
@@ -148,7 +109,11 @@ cd gateway
 | `http://localhost:8080/h2-console` | H2 database console |
 | `http://localhost:8080/actuator/metrics` | Micrometer metrics |
 
-**H2 Console** (`http://localhost:8080/h2-console`):
+![Gateway Swagger](docs/diagrams/SwaggerGateway.png)
+
+#### Inspecting the Database (H2 Console)
+
+Open `http://localhost:8080/h2-console` and connect with:
 
 | Field | Value |
 |-------|-------|
@@ -156,14 +121,62 @@ cd gateway
 | Username | `sa` |
 | Password | _(leave empty)_ |
 
+Useful queries:
+```sql
+-- View all stored events
+SELECT * FROM EVENTS;
+
+-- Events for a specific account in chronological order
+SELECT * FROM EVENTS WHERE ACCOUNT_ID = 'acct-123' ORDER BY EVENT_TIMESTAMP;
+```
+
+---
+
+### Manual — Account Service
+
+```bash
+cd account-service
+./mvnw spring-boot:run
+```
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:8081/swagger-ui/index.html` | Swagger UI — interactive API testing |
+| `http://localhost:8081/v3/api-docs` | OpenAPI JSON spec |
+| `http://localhost:8081/health` | Health check |
+| `http://localhost:8081/h2-console` | H2 database console |
+
+![Account Service Swagger](docs/diagrams/SwaggerAcctService.png)
+
+#### Inspecting the Database (H2 Console)
+
+Open `http://localhost:8081/h2-console` and connect with:
+
+| Field | Value |
+|-------|-------|
+| JDBC URL | `jdbc:h2:mem:accountsdb` |
+| Username | `sa` |
+| Password | _(leave empty)_ |
+
+Useful queries:
+```sql
+-- View all applied transactions
+SELECT * FROM APPLIED_TRANSACTION;
+
+-- Check balance for a specific account
+SELECT ACCOUNT_ID,
+       SUM(CASE WHEN TYPE = 'CREDIT' THEN AMOUNT ELSE -AMOUNT END) AS BALANCE
+FROM APPLIED_TRANSACTION
+GROUP BY ACCOUNT_ID;
+```
 
 ---
 
 ## Testing Manually via Swagger
 
-### Gateway Service (`http://localhost:8080/swagger-ui/index.html`)
+### Gateway Service
 
-![Gateway Swagger](docs/diagrams/SwaggerGateway.png)
+Open `http://localhost:8080/swagger-ui/index.html` and try:
 
 **Submit an event (`POST /events`):**
 ```json
@@ -185,13 +198,12 @@ cd gateway
 
 ---
 
-### Account Service (`http://localhost:8081/swagger-ui/index.html`)
+### Account Service
 
-Once the Account Service is running, open `http://localhost:8081/swagger-ui/index.html` and try:
+Open `http://localhost:8081/swagger-ui/index.html` and try:
 
-**Apply a transaction:**
+**Apply a transaction (`POST /accounts/{accountId}/transactions`):**
 ```json
-POST /accounts/{accountId}/transactions
 {
   "eventId": "evt-001",
   "type": "CREDIT",
@@ -206,7 +218,7 @@ POST /accounts/{accountId}/transactions
 GET /accounts/{accountId}/balance
 ```
 
-**Verify idempotency** — submit the same `eventId` twice, second response returns `alreadyApplied: true`.
+**Verify idempotency** — submit the same `eventId` twice; second response returns `alreadyApplied: true`.
 
 ---
 
