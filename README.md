@@ -73,7 +73,26 @@ Internal service. Manages account state — applies transactions and computes ba
 
 ## Running the Services
 
-> _Docker Compose to be added_
+### Docker Compose (recommended)
+
+Build both JARs first, then start both services with a single command:
+
+```bash
+# Build both JARs (from the repo root)
+./mvnw package -DskipTests
+
+# Start both services
+docker compose up
+```
+
+| Service | URL |
+|---------|-----|
+| Gateway | `http://localhost:8080` |
+| Account Service | `http://localhost:8081` |
+
+The `docker-compose.yml` mounts the pre-built JARs into a `eclipse-temurin:21-jre` image for each service. The Gateway waits for the Account Service health check to pass before starting.
+
+---
 
 ### Manual — Account Service
 ```bash
@@ -114,7 +133,26 @@ GROUP BY ACCOUNT_ID;
 
 ### Manual — Gateway Service
 
-> _To be added_
+```bash
+cd gateway
+./mvnw spring-boot:run
+```
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:8080/swagger-ui/index.html` | Swagger UI — interactive API testing |
+| `http://localhost:8080/v3/api-docs` | OpenAPI JSON spec |
+| `http://localhost:8080/health` | Health check (includes circuit breaker state) |
+| `http://localhost:8080/h2-console` | H2 database console |
+| `http://localhost:8080/actuator/metrics` | Micrometer metrics |
+
+**H2 Console** (`http://localhost:8080/h2-console`):
+
+| Field | Value |
+|-------|-------|
+| JDBC URL | `jdbc:h2:mem:eventsdb` |
+| Username | `sa` |
+| Password | _(leave empty)_ |
 
 ---
 
@@ -160,12 +198,42 @@ Covers:
 
 ### Gateway Service
 
-> _To be added_
+```bash
+cd gateway
+./mvnw test
+```
+
+Covers:
+- Idempotency — duplicate `eventId` returns `200 duplicate=true` without re-applying
+- Core endpoints — submit, get by ID, list by account
+- Graceful degradation — GET endpoints work when Account Service is down
+- Circuit breaker — opens after repeated Account Service failures
+- Input validation — rejects missing fields, invalid type, negative amount
+- Trace propagation — verifies B3 `X-B3-TraceId` header is forwarded to the Account Service
+- Health check
 
 ---
 
 ## Resiliency Pattern
 
-> _To be added_
+The Gateway uses a **circuit breaker** (Resilience4j) on all calls to the Account Service, combined with a **per-call timeout**.
+
+### Why a circuit breaker?
+
+The Account Service is a hard dependency for writes. If it starts failing, retrying every incoming request would:
+- pile load on an already-struggling service
+- tie up Gateway threads waiting on calls that are likely to fail anyway
+
+The breaker detects a sustained failure rate (≥ 50% of the last 10 calls), **opens**, and then fails fast — every `POST /events` immediately returns `503` instead of hanging. After 5 seconds it lets a few trial calls through (half-open state) and closes once the service recovers.
+
+### 4xx vs 5xx distinction
+
+A downstream `4xx` means the request was bad, not that the service is unhealthy. `AccountServiceClientException` is raised for 4xx responses and is configured as an **ignored exception** in the breaker — a bad request does not count as evidence of a failing service. Only `5xx` responses, timeouts, and connection failures trip the breaker.
+
+### Graceful degradation
+
+Even with the circuit open:
+- `GET /events/{id}` and `GET /events?account=...` still work — they read from the Gateway's own H2 database, which doesn't need the Account Service.
+- `POST /events` stores the event locally as `PENDING` before attempting the Account Service call, so the event is preserved even if the downstream call fails.
 
 ---
