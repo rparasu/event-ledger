@@ -119,6 +119,8 @@ Open `http://localhost:8081/h2-console` and connect with:
 | Username | `sa` |
 | Password | _(leave empty)_ |
 
+![Account Service H2 Console](docs/diagrams/h2-accountsdb.png)
+
 Useful queries:
 ```sql
 -- View all applied transactions
@@ -154,9 +156,36 @@ cd gateway
 | Username | `sa` |
 | Password | _(leave empty)_ |
 
+
 ---
 
 ## Testing Manually via Swagger
+
+### Gateway Service (`http://localhost:8080/swagger-ui/index.html`)
+
+![Gateway Swagger](docs/diagrams/SwaggerGateway.png)
+
+**Submit an event (`POST /events`):**
+```json
+{
+  "eventId": "evt-001",
+  "accountId": "acct-123",
+  "type": "CREDIT",
+  "amount": 150.00,
+  "currency": "USD",
+  "eventTimestamp": "2026-05-15T14:02:11Z",
+  "metadata": {
+    "source": "mainframe-batch",
+    "batchId": "B-9042"
+  }
+}
+```
+
+**Verify idempotency** — submit the same `eventId` twice; second response returns `"duplicate": true` with HTTP 200.
+
+---
+
+### Account Service (`http://localhost:8081/swagger-ui/index.html`)
 
 Once the Account Service is running, open `http://localhost:8081/swagger-ui/index.html` and try:
 
