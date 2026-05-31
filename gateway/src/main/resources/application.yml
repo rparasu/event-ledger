@@ -1,0 +1,62 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  main:
+    # Both spring-web (MVC) and spring-webflux are on the classpath (WebClient
+    # is used only as an HTTP client). Pin the servlet stack so MVC controllers
+    # and the servlet-based Swagger UI work correctly.
+    web-application-type: servlet
+  datasource:
+    url: jdbc:h2:mem:eventsdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# Base URL of the internal Account Service. Overridden in docker-compose.
+account-service:
+  base-url: http://localhost:8081
+  request-timeout-ms: 2000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      accountService:
+        register-health-indicator: true
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5          # need 5 calls before evaluating
+        failure-rate-threshold: 50          # open when >=50% of the window fails
+        wait-duration-in-open-state: 5s     # stay open 5s, then probe
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        # A downstream 4xx is a bad request, not an outage; don't let it trip the breaker.
+        ignore-exceptions:
+          - com.ledger.gateway.client.AccountServiceClientException
+
+logging:
+  level:
+    root: INFO
+    com.ledger: INFO
