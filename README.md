@@ -75,22 +75,40 @@ Internal service. Manages account state — applies transactions and computes ba
 
 ### Docker Compose (recommended)
 
-Build both JARs first, then start both services with a single command:
+> **Note:** The `docker-compose.yml` mounts pre-built JARs, so you must build them first before running Docker Compose.
 
+**Step 1 — Build both JARs** (from the repo root):
 ```bash
-# Build both JARs (from the repo root)
 ./mvnw package -DskipTests
+```
 
-# Start both services
+**Step 2 — Start both services:**
+```bash
 docker compose up
 ```
+
+Docker Compose will start the Account Service first, wait for its health check to pass, then start the Gateway automatically.
 
 | Service | URL |
 |---------|-----|
 | Gateway | `http://localhost:8080` |
 | Account Service | `http://localhost:8081` |
 
-The `docker-compose.yml` mounts the pre-built JARs into a `eclipse-temurin:21-jre` image for each service. The Gateway waits for the Account Service health check to pass before starting.
+**Other useful commands:**
+```bash
+# Run in background
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# View logs for one service
+docker compose logs -f gateway
+docker compose logs -f account-service
+
+# Stop both services
+docker compose down
+```
 
 ---
 
