@@ -56,11 +56,20 @@ Internal service. Manages account state — applies transactions and computes ba
 
 ## Sequence Diagrams
 
-### Gateway Service Flow
+### Gateway Service – General Flow
 ![Gateway Sequence](docs/diagrams/gateway-sequence.png)
 
-### Account Service Flow
+### Account Service – General Flow
 ![Account Service Sequence](docs/diagrams/account-service-sequence.png)
+
+### Duplicate Event (Idempotency)
+![Idempotency Flow](docs/diagrams/idempotencyFlow.png)
+
+### Circuit Breaker Flow
+![Circuit Breaker Flow](docs/diagrams/circuitBreakerFlow.png)
+
+### Project Structure Overview
+![Project Structure](docs/diagrams/ProjStructure.png)
 
 ---
 
