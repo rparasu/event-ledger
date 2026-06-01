@@ -68,6 +68,7 @@ Internal service. Manages account state — applies transactions and computes ba
 
 - Java 21
 - Maven 3.x (or use the included `./mvnw` wrapper — no install needed)
+- Docker (only required for Docker Compose; not needed for manual startup)
 
 ---
 
