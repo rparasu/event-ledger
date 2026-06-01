@@ -45,7 +45,7 @@ class GatewayIntegrationTest {
 
     @BeforeAll
     static void startAccountService() throws Exception {
-        Path jar = Paths.get("../account-service/target/account-service-0.0.1-SNAPSHOT.jar")
+        Path jar = Paths.get("../account-service/target/account-service.jar")
                 .toAbsolutePath();
 
         accountServiceProcess = new ProcessBuilder("java", "-jar", jar.toString())
