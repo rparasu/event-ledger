@@ -49,6 +49,11 @@
 			<artifactId>logstash-logback-encoder</artifactId>
 			<version>8.0</version>
 		</dependency>
+		<!-- Micrometer Tracing: extracts incoming B3 headers and logs traceId/spanId -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-tracing-bridge-brave</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
